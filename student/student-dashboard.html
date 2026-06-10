@@ -101,7 +101,7 @@
                        CR's updates on class or course activies.
                     </p>
                     <div>
-                        <div class="card-stats">Updates Items: <span id="payCount" style="color:#fff;">0</span></div>
+                        <div class="card-stats">Updates Items: <span id="updCount" style="color:#fff;">0</span></div>
                         <a href="class-updates.html" class="action-link">Open Terminal</a>
                     </div>
                 </div>
@@ -132,11 +132,78 @@
 
 
 
-<script src="/main.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+<script>
+    // 1. Initialize your Firebase App
+        const firebaseConfig = {
+            apiKey: "AIzaSyCO71lvobszEJyjrAVEjo340kypv9EV7IU",
+            authDomain: "cyb-cruise-hub.firebaseapp.com",
+            databaseURL: "https://cyb-cruise-hub-default-rtdb.firebaseio.com",
+            projectId: "cyb-cruise-hub",
+            storageBucket: "cyb-cruise-hub.firebasestorage.app",
+            messagingSenderId: "793275106982",
+            appId: "1:793275106982:web:75fb6f75a3afd7bb6ad667"
+        };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    // Define the global 'db' variable used by your dashboard
+    const database = firebase.database(); 
 
 
 
+    document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Dashboard UI listeners
+            initializeFirebaseListeners();
 
-<script src="student-dashboard.js"></script>
+            const closeBtn = document.getElementById('closeAdminBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    window.location.href = '/Home.html';
+                });
+            }
+        });
+
+
+        function initializeFirebaseListeners() {
+            // Ensure 'db' is available (global Firebase object)
+            // We attach listeners to the paths where your data lives
+            const paths = ['attendance', 'submissions', 'payments'];
+
+            paths.forEach(path => {
+                database.ref(path).on('value', (snapshot) => {
+                    const data = snapshot.val() || {};
+                    const count = Object.keys(data).length;
+
+                    // Map the paths to the IDs in your HTML
+                    const idMap = {
+                        'attendance': 'attCount',
+                        'submissions': 'subCount',
+                        'payments': 'payCount'
+                    };
+
+                    const element = document.getElementById(idMap[path]);
+                    if (element) {
+                        element.textContent = count;
+                        updateTotalTasks();
+                    }
+                });
+            });
+        }
+
+        function updateTotalTasks() {
+            const att = parseInt(document.getElementById('attCount').textContent) || 0;
+            const sub = parseInt(document.getElementById('subCount').textContent) || 0;
+            const pay = parseInt(document.getElementById('payCount').textContent) || 0;
+
+            document.getElementById('totalTasksCount').textContent = `${att + sub + pay} Active Tasks`;
+        }
+</script>
+
+<!-- <script src="student-dashboard.js" defer></script> -->
+
+
+<script src="/main.js" defer></script>
 </body>
 </html>
