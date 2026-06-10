@@ -1,12 +1,14 @@
 /**
  * CYB CRUISE GROUP — STUDENT DASHBOARD ENGINE
- * UPDATED: Direct Firebase Implementation (No API Server)
+ * SECURED: Read-only access to matrix nodes
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Dashboard UI listeners
-    initializeFirebaseListeners();
+    // 1. Fetch data from the API endpoint (The server.js proxy we discussed)
+    // This replaces 'loadAdminMatrix()' which was for admins only
+    fetchStudentData();
 
+    // 2. Simple navigation for students
     const closeBtn = document.getElementById('closeAdminBtn');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
@@ -16,36 +18,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-function initializeFirebaseListeners() {
-    // Ensure 'db' is available (global Firebase object)
-    // We attach listeners to the paths where your data lives
-    const paths = ['attendance', 'submissions', 'payments'];
+// student-dashboard.js
+async function fetchStudentData() {
+  try {
+    const response = await fetch('/api/dashboard-metrics');
+     const db = await response.json();
 
-    paths.forEach(path => {
-        database.ref(path).on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            const count = Object.keys(data).length;
-            
-            // Map the paths to the IDs in your HTML
-            const idMap = {
-                'attendance': 'attCount',
-                'submissions': 'subCount',
-                'payments': 'payCount'
-            };
+        // Safe access: Use optional chaining or defaults if nodes are empty
+        const countAtt = db.attendance ? Object.keys(db.attendance).length : 0;
+        const countSub = db.submissions ? Object.keys(db.submissions).length : 0;
+        const countPay = db.payments ? Object.keys(db.payments).length : 0;
 
-            const element = document.getElementById(idMap[path]);
-            if (element) {
-                element.textContent = count;
-                updateTotalTasks();
-            }
-        });
-    });
-}
 
-function updateTotalTasks() {
-    const att = parseInt(document.getElementById('attCount').textContent) || 0;
-    const sub = parseInt(document.getElementById('subCount').textContent) || 0;
-    const pay = parseInt(document.getElementById('payCount').textContent) || 0;
+         // Render metrics to UI
+        document.getElementById('attCount').textContent = countAtt;
+        document.getElementById('subCount').textContent = countSub;
+        document.getElementById('payCount').textContent = countPay;
+        document.getElementById('totalTasksCount').textContent = `${countAtt + countSub + countPay} Active Tasks`;
+
+
+    if (!response.ok) {
+      // Handle specific HTTP errors (like 403 Restricted)
+      if (response.status === 403) throw new Error("Access restricted");
+      throw new Error(`Server error: ${response.status}`);
+    }
     
-    document.getElementById('totalTasksCount').textContent = `${att + sub + pay} Active Tasks`;
+    return await response.json();
+  } catch (error) {
+    // Check if the user is offline vs a logical error
+    const message = !navigator.onLine ? "Offline" : error.message;
+    console.error(`Dashboard Fetch Error: ${message}`);
+
+     // Set metrics to 0 if data load fails
+        ['attCount', 'subCount', 'payCount'].forEach(id => {
+            document.getElementById(id).textContent = "0";
+        });
+  }
 }
+
+

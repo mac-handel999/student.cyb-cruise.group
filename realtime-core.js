@@ -14,11 +14,10 @@ const firebaseConfig = {
     appId: "1:793275106982:web:75fb6f75a3afd7bb6ad667"
   };
 // Only initialize if not already initialized
-// if (!firebase.apps.length) {
-//     firebase.initializeApp(firebaseConfig);
-// }
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-firebase.initializeApp(firebaseConfig);
 // 2. Set the global database object that your other scripts (submission.js, etc.) use
 const database = firebase.database();
 
